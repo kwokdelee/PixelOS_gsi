@@ -3,7 +3,7 @@ name: Build CopilotOs GSI
 on:
   push:
     branches:
-      - main
+      - 14
 
 jobs:
   build:
