@@ -1,0 +1,96 @@
+name: Build PixelOS GSI
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'  # 每天定時構建
+  workflow_dispatch:  # 手動觸發
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢查代碼
+        uses: actions/checkout@v3
+
+      - name: 安裝構建工具
+        run: |
+          sudo apt update
+          sudo apt install -y bc bison build-essential curl flex g++-multilib gcc-multilib git gnupg gperf \
+            libxml2 lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev \
+            imagemagick git lunzip lzop schedtool squashfs-tools xsltproc zip zlib1g-dev openjdk-8-jdk \
+            python3 python3-pip perl xmlstarlet virtualenv xz-utils rr jq libncurses5 pngcrush lib32ncurses5-dev \
+            git-lfs libxml2 openjdk-11-jdk-headless
+
+      - name: 設置 repo
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo 'export PATH=$HOME/bin:$PATH' >> ~/.profile
+          source ~/.profile
+
+      - name: 配置 git
+        run: |
+          git config --global user.name "Your Name"
+          git config --global user.email "your-email@example.com"
+
+      - name: 開啟 ccache
+        run: |
+          echo 'export USE_CCACHE=1' >> ~/.bashrc
+          echo 'export CCACHE_COMPRESS=1' >> ~/.bashrc
+          echo 'export CCACHE_MAXSIZE=50G' >> ~/.bashrc
+          source ~/.bashrc
+
+      - name: 初始化代碼倉庫
+        run: |
+          mkdir -p ~/pixelos && cd ~/pixelos
+          repo init -u https://github.com/PixelOS-Pixelish/manifest -b thirteen
+
+      - name: 添加 PHH treble 支持
+        run: |
+          git clone https://github.com/phhusson/treble_manifest .repo/local_manifests -b android-13.0
+          rm .repo/local_manifests/replace.xml  # 適用於非 AOSP GSI
+
+      - name: 同步源碼
+        run: |
+          repo sync -c -j6 --force-sync --no-tags --no-clone-bundle
+
+      - name: 應用 PHH 補丁
+        run: |
+          wget https://github.com/phhusson/treble_experimentations/releases/latest/download/patches-for-developers.zip
+          unzip patches-for-developers.zip
+          find . -name "*.patch" -exec git am {} \;
+
+      - name: 配置 Treble 環境
+        run: |
+          cd device/phh/treble
+          bash generate.sh vendor/pixelos/config/common_full_phone.mk
+
+      - name: 編譯 GSI
+        run: |
+          source build/envsetup.sh
+          lunch treble_arm64_bvS-userdebug
+          WITHOUT_CHECK_API=true make -j$(nproc) systemimage
+
+      - name: 壓縮系統鏡像
+        run: |
+          cd out/target/product/phh_*/
+          xz -9 -T0 -v -z system.img
+
+      - name: 上傳 GSI
+        uses: actions/upload-artifact@v3
+        with:
+          name: PixelOS-system-image
+          path: out/target/product/phh_*/system.img.xz
+          
+      - name: 創建 GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: out/target/product/phh_*/system.img.xz
+          tag: latest
+          name: PixelOS GSI Release
+          body: |
+            自動構建的 PixelOS GSI，基於 PHH-Treble 並包含 OTA 支援。
