@@ -3,7 +3,7 @@ name: Build PixelOS GSI
 on:
   push:
     branches:
-      - main
+      - 14
   schedule:
     - cron: '0 0 * * *'  # 每天定時構建
   workflow_dispatch:  # 手動觸發
