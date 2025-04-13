@@ -81,7 +81,7 @@ jobs:
           xz -9 -T0 -v -z system.img
 
       - name: 上傳 GSI
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: PixelOS-system-image
           path: out/target/product/phh_*/system.img.xz
