@@ -5,23 +5,24 @@ on:
     branches:
       - 14
   schedule:
-    - cron: '0 0 * * *'  # 每天定時構建
-  workflow_dispatch:  # 手動觸發
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Downgraded runner to 22.04
     steps:
       - name: 檢查代碼
         uses: actions/checkout@v4
 
       - name: 安裝構建工具
         run: |
+          sudo add-apt-repository universe
           sudo apt update
           sudo apt install -y bc bison build-essential curl flex g++-multilib gcc-multilib git gnupg gperf \
-            libxml2 lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev \
+            libxml2 lib32z1-dev liblz4-tool libncurses6-dev libsdl1.2-dev libwxgtk3.2-dev \
             imagemagick git lunzip lzop schedtool squashfs-tools xsltproc zip zlib1g-dev openjdk-8-jdk \
-            python3 python3-pip perl xmlstarlet virtualenv xz-utils rr jq libncurses5 pngcrush lib32ncurses5-dev \
+            python3 python3-pip perl xmlstarlet virtualenv xz-utils rr jq pngcrush \
             git-lfs libxml2 openjdk-11-jdk-headless
 
       - name: 設置 repo
