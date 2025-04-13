@@ -34,8 +34,8 @@ jobs:
 
       - name: 配置 git
         run: |
-          git config --global user.name "Your Name"
-          git config --global user.email "your-email@example.com"
+          git config --global user.name "kwokdelee"
+          git config --global user.email "kwokdelee@gmail.com"
 
       - name: 開啟 ccache
         run: |
@@ -52,7 +52,7 @@ jobs:
       - name: 添加 PHH treble 支持
         run: |
           git clone https://github.com/phhusson/treble_manifest .repo/local_manifests -b android-13.0
-          rm .repo/local_manifests/replace.xml  # 適用於非 AOSP GSI
+          rm .repo/local_manifests/replace.xml
 
       - name: 同步源碼
         run: |
