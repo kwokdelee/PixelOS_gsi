@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # Downgraded runner to 22.04
+    runs-on: ubuntu-latest
     steps:
       - name: 檢查代碼
         uses: actions/checkout@v4
